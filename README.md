@@ -16,7 +16,16 @@
 
 ##  Docker 部署
 
-### 1. 启动容器
+### 1. 修改Nginx配置文件
+
+修改./nginx.conf文件中upstream mindie_backend部分，修改为MindIE实际的IP地址及端口。
+```
+    upstream mindie_backend {
+        server 192.168.242.220:1025;   # 替换为你的 MindIE 实例地址
+    }
+```
+
+### 2. 启动容器
 
 ```bash
 docker-compose up -d
@@ -25,7 +34,7 @@ docker-compose up -d
 * `api-gateway` 暴露端口 **8001**
 * `redis` 存储 API-Key 和描述信息，数据持久化在 `./redis/data`
 
-### 2. 查看日志
+### 3. 查看日志
 
 ```bash
 docker logs mindie-api-gateway
@@ -44,6 +53,7 @@ requirepass Corem@2025!
 
 * Lua 网关会自动使用此密码连接 Redis
 * Redis 数据文件存储在 `./redis/data`，重启后仍然保留
+* 该密码修改后需同步更新Lua/auth.lua、tools/目录下文件相应字段。
 
 ---
 
