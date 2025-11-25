@@ -1,0 +1,50 @@
+version: "3.8"
+
+networks:
+  mindie-net:
+    driver: bridge
+    ipam:
+      config:
+        - subnet:172.31.251.0/24 # 自定义子网，避免与其他 Docker 网络冲突
+
+services:
+  redis:
+    image: redis:7
+    container_name: mindie-redis
+    restart: always
+    networks:
+      - mindie-net
+    volumes:
+      - redis-data:/data
+      - ./redis/redis.conf:/usr/local/etc/redis/redis.conf:ro
+    command: ["redis-server", "/usr/local/etc/redis/redis.conf"]
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  api-gateway:
+    image: openresty/openresty:bullseye-fat
+    container_name: mindie-api-gateway
+    restart: always
+    networks:
+      - mindie-net
+    ports:
+      - "8001:80"
+    volumes:
+      - ./nginx.conf:/usr/local/openresty/nginx/conf/nginx.conf:ro
+      - ./lua:/usr/local/openresty/nginx/lua:ro
+    depends_on:
+      redis:
+        condition: service_healthy
+
+volumes:
+  redis-data:
+    driver: local
+    driver_opts:
+      type: none
+      device: ./redis/data # 将数据存储在主机的 ./redis/data 目录中
+      o: bind
